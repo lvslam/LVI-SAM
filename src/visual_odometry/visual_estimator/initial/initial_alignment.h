@@ -1,4 +1,5 @@
 #pragma once
+
 #include <eigen3/Eigen/Dense>
 #include <iostream>
 #include "../factor/imu_factor.h"
@@ -10,63 +11,65 @@
 using namespace Eigen;
 using namespace std;
 
+
 class ImageFrame
 {
-    public:
-        ImageFrame(){};
-        ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>>& _points, 
-                   const vector<float> &_lidar_initialization_info,
-                   double _t):
-        t{_t}, is_key_frame{false}, reset_id{-1}, gravity{9.805}
-        {
-            points = _points;
-            
-            // reset id in case lidar odometry relocate
-            reset_id = (int)round(_lidar_initialization_info[0]);
-            // Pose
-            T.x() = _lidar_initialization_info[1];
-            T.y() = _lidar_initialization_info[2];
-            T.z() = _lidar_initialization_info[3];
-            // Rotation
-            Eigen::Quaterniond Q = Eigen::Quaterniond(_lidar_initialization_info[7],
-                                                      _lidar_initialization_info[4],
-                                                      _lidar_initialization_info[5],
-                                                      _lidar_initialization_info[6]);
-            R = Q.normalized().toRotationMatrix();
-            // Velocity
-            V.x() = _lidar_initialization_info[8];
-            V.y() = _lidar_initialization_info[9];
-            V.z() = _lidar_initialization_info[10];
-            // Acceleration bias
-            Ba.x() = _lidar_initialization_info[11];
-            Ba.y() = _lidar_initialization_info[12];
-            Ba.z() = _lidar_initialization_info[13];
-            // Gyroscope bias
-            Bg.x() = _lidar_initialization_info[14];
-            Bg.y() = _lidar_initialization_info[15];
-            Bg.z() = _lidar_initialization_info[16];
-            // Gravity
-            gravity = _lidar_initialization_info[17];
-        };
+public:
+    ImageFrame() {
+    };
 
-        map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>> > > points;
-        double t;
-        
-        IntegrationBase *pre_integration;
-        bool is_key_frame;
+    ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &_points,
+               const vector<float> &_lidar_initialization_info,
+               double _t) :
+            t{_t}, is_key_frame{false}, reset_id{-1}, gravity{9.805} {
+        points = _points;
 
-        // Lidar odometry info
-        int reset_id;
-        Vector3d T;
-        Matrix3d R;
-        Vector3d V;
-        Vector3d Ba;
-        Vector3d Bg;
-        double gravity;
+        // reset id in case lidar odometry relocate
+        reset_id = (int) round(_lidar_initialization_info[0]);
+        // Pose
+        T.x() = _lidar_initialization_info[1];
+        T.y() = _lidar_initialization_info[2];
+        T.z() = _lidar_initialization_info[3];
+        // Rotation
+        Eigen::Quaterniond Q = Eigen::Quaterniond(_lidar_initialization_info[7],
+                                                  _lidar_initialization_info[4],
+                                                  _lidar_initialization_info[5],
+                                                  _lidar_initialization_info[6]);
+        R = Q.normalized().toRotationMatrix();
+        // Velocity
+        V.x() = _lidar_initialization_info[8];
+        V.y() = _lidar_initialization_info[9];
+        V.z() = _lidar_initialization_info[10];
+        // Acceleration bias
+        Ba.x() = _lidar_initialization_info[11];
+        Ba.y() = _lidar_initialization_info[12];
+        Ba.z() = _lidar_initialization_info[13];
+        // Gyroscope bias
+        Bg.x() = _lidar_initialization_info[14];
+        Bg.y() = _lidar_initialization_info[15];
+        Bg.z() = _lidar_initialization_info[16];
+        // Gravity
+        gravity = _lidar_initialization_info[17];
+    };
+
+    map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>> > points;
+    double t;
+
+    IntegrationBase *pre_integration;
+    bool is_key_frame;
+
+    // Lidar odometry info
+    int reset_id;
+    Vector3d T;
+    Matrix3d R;
+    Vector3d V;
+    Vector3d Ba;
+    Vector3d Bg;
+    double gravity;
 };
 
 
-bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs, Vector3d &g, VectorXd &x);
+bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs, Vector3d &g, VectorXd &x);
 
 
 class odometryRegister
@@ -77,41 +80,36 @@ public:
     tf::Quaternion q_lidar_to_cam;
     Eigen::Quaterniond q_lidar_to_cam_eigen;
 
-    ros::Publisher pub_latest_odometry; 
+    ros::Publisher pub_latest_odometry;
 
-    odometryRegister(ros::NodeHandle n_in):
-    n(n_in)
-    {
+    odometryRegister(ros::NodeHandle n_in) :
+            n(n_in) {
         q_lidar_to_cam = tf::Quaternion(0, 1, 0, 0); // rotate orientation // mark: camera - lidar
         q_lidar_to_cam_eigen = Eigen::Quaterniond(0, 0, 0, 1); // rotate position by pi, (w, x, y, z) // mark: camera - lidar
         // pub_latest_odometry = n.advertise<nav_msgs::Odometry>("odometry/test", 1000);
     }
 
     // convert odometry from ROS Lidar frame to VINS camera frame
-    vector<float> getOdometry(deque<nav_msgs::Odometry>& odomQueue, double img_time)
-    {
+    vector<float> getOdometry(deque<nav_msgs::Odometry> &odomQueue, double img_time) {
         vector<float> odometry_channel;
         odometry_channel.resize(18, -1); // reset id(1), P(3), Q(4), V(3), Ba(3), Bg(3), gravity(1)
 
         nav_msgs::Odometry odomCur;
-        
+
         // pop old odometry msg
-        while (!odomQueue.empty()) 
-        {
+        while (!odomQueue.empty()) {
             if (odomQueue.front().header.stamp.toSec() < img_time - 0.05)
                 odomQueue.pop_front();
             else
                 break;
         }
 
-        if (odomQueue.empty())
-        {
+        if (odomQueue.empty()) {
             return odometry_channel;
         }
 
         // find the odometry time that is the closest to image time
-        for (int i = 0; i < (int)odomQueue.size(); ++i)
-        {
+        for (int i = 0; i < (int) odomQueue.size(); ++i) {
             odomCur = odomQueue[i];
 
             if (odomCur.header.stamp.toSec() < img_time - 0.002) // 500Hz imu
@@ -121,8 +119,7 @@ public:
         }
 
         // time stamp difference still too large
-        if (abs(odomCur.header.stamp.toSec() - img_time) > 0.05)
-        {
+        if (abs(odomCur.header.stamp.toSec() - img_time) > 0.05) {
             return odometry_channel;
         }
 
@@ -160,8 +157,8 @@ public:
         odometry_channel[5] = odomCur.pose.pose.orientation.y;
         odometry_channel[6] = odomCur.pose.pose.orientation.z;
         odometry_channel[7] = odomCur.pose.pose.orientation.w;
-        odometry_channel[8]  = odomCur.twist.twist.linear.x;
-        odometry_channel[9]  = odomCur.twist.twist.linear.y;
+        odometry_channel[8] = odomCur.twist.twist.linear.x;
+        odometry_channel[9] = odomCur.twist.twist.linear.y;
         odometry_channel[10] = odomCur.twist.twist.linear.z;
         odometry_channel[11] = odomCur.pose.covariance[1];
         odometry_channel[12] = odomCur.pose.covariance[2];

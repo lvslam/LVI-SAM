@@ -7,10 +7,11 @@
 #include "../utility/tic_toc.h"
 #include "../parameters.h"
 
+
 //对imu-camera 时间戳不完全同步和 Rolling shutter 相机的支持
 class ProjectionTdFactor : public ceres::SizedCostFunction<2, 7, 7, 7, 1, 1>
 {
-  public:
+public:
     ProjectionTdFactor(const Eigen::Vector3d &_pts_i, const Eigen::Vector3d &_pts_j,
                        const Eigen::Vector2d &_velocity_i, const Eigen::Vector2d &_velocity_j,
                        const double _td_i, const double _td_j, const double _row_i, const double _row_j);

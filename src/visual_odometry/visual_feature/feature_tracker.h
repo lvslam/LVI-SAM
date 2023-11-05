@@ -25,12 +25,13 @@ bool inBorder(const cv::Point2f &pt);
 void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
 void reduceVector(vector<int> &v, vector<uchar> status);
 
+
 class FeatureTracker
 {
-  public:
+public:
     FeatureTracker();
 
-    void readImage(const cv::Mat &_img,double _cur_time);
+    void readImage(const cv::Mat &_img, double _cur_time);
 
     void setMask();
 
@@ -81,24 +82,22 @@ public:
     const int num_bins = 360;
     vector<vector<PointType>> pointsArray;
 
-    DepthRegister(ros::NodeHandle n_in):
-    n(n_in)
-    {
+    DepthRegister(ros::NodeHandle n_in) :
+            n(n_in) {
         // messages for RVIZ visualization
         pub_depth_feature = n.advertise<sensor_msgs::PointCloud2>(PROJECT_NAME + "/vins/depth/depth_feature", 5);
-        pub_depth_image =   n.advertise<sensor_msgs::Image>      (PROJECT_NAME + "/vins/depth/depth_image",   5);
-        pub_depth_cloud =   n.advertise<sensor_msgs::PointCloud2>(PROJECT_NAME + "/vins/depth/depth_cloud",   5);
+        pub_depth_image = n.advertise<sensor_msgs::Image>(PROJECT_NAME + "/vins/depth/depth_image", 5);
+        pub_depth_cloud = n.advertise<sensor_msgs::PointCloud2>(PROJECT_NAME + "/vins/depth/depth_cloud", 5);
 
         pointsArray.resize(num_bins);
         for (int i = 0; i < num_bins; ++i)
             pointsArray[i].resize(num_bins);
     }
 
-    sensor_msgs::ChannelFloat32 get_depth(const ros::Time& stamp_cur, const cv::Mat& imageCur, 
-                                          const pcl::PointCloud<PointType>::Ptr& depthCloud,
-                                          const camodocal::CameraPtr& camera_model ,
-                                          const vector<geometry_msgs::Point32>& features_2d)
-    {
+    sensor_msgs::ChannelFloat32 get_depth(const ros::Time &stamp_cur, const cv::Mat &imageCur,
+                                          const pcl::PointCloud<PointType>::Ptr &depthCloud,
+                                          const camodocal::CameraPtr &camera_model,
+                                          const vector<geometry_msgs::Point32> &features_2d) {
         // 0.1 initialize depth for return
         sensor_msgs::ChannelFloat32 depth_of_point;
         depth_of_point.name = "depth";
@@ -109,11 +108,11 @@ public:
             return depth_of_point;
 
         // 0.3 look up transform at current image time
-        try{
+        try {
             listener.waitForTransform("vins_world", "vins_body_ros", stamp_cur, ros::Duration(0.01));
             listener.lookupTransform("vins_world", "vins_body_ros", stamp_cur, transform);
-        } 
-        catch (tf::TransformException ex){
+        }
+        catch (tf::TransformException ex) {
             // ROS_ERROR("image no tf");
             return depth_of_point;
         }
@@ -132,14 +131,13 @@ public:
 
         // 0.5 project undistorted normalized (z) 2d features onto a unit sphere
         pcl::PointCloud<PointType>::Ptr features_3d_sphere(new pcl::PointCloud<PointType>());
-        for (int i = 0; i < (int)features_2d.size(); ++i)
-        {
+        for (int i = 0; i < (int) features_2d.size(); ++i) {
             // normalize 2d feature to a unit sphere
             Eigen::Vector3f feature_cur(features_2d[i].x, features_2d[i].y, features_2d[i].z); // z always equal to 1
-            feature_cur.normalize(); 
+            feature_cur.normalize();
             // convert to ROS standard
             PointType p;
-            p.x =  feature_cur(2);
+            p.x = feature_cur(2);
             p.y = -feature_cur(0);
             p.z = -feature_cur(1);
             p.intensity = -1; // intensity will be used to save depth
@@ -147,11 +145,10 @@ public:
         }
 
         // 3. project depth cloud on a range image, filter points satcked in the same region
-        float bin_res = 180.0 / (float)num_bins; // currently only cover the space in front of lidar (-90 ~ 90)
+        float bin_res = 180.0 / (float) num_bins; // currently only cover the space in front of lidar (-90 ~ 90)
         cv::Mat rangeImage = cv::Mat(num_bins, num_bins, CV_32F, cv::Scalar::all(FLT_MAX));
 
-        for (int i = 0; i < (int)depth_cloud_local->size(); ++i)
-        {
+        for (int i = 0; i < (int) depth_cloud_local->size(); ++i) {
             PointType p = depth_cloud_local->points[i];
             // filter points not in camera view
             if (p.x < 0 || abs(p.y / p.x) > 10 || abs(p.z / p.x) > 10)
@@ -167,8 +164,7 @@ public:
                 continue;
             // only keep points that's closer
             float dist = pointDistance(p);
-            if (dist < rangeImage.at<float>(row_id, col_id))
-            {
+            if (dist < rangeImage.at<float>(row_id, col_id)) {
                 rangeImage.at<float>(row_id, col_id) = dist;
                 pointsArray[row_id][col_id] = p;
             }
@@ -176,10 +172,8 @@ public:
 
         // 4. extract downsampled depth cloud from range image
         pcl::PointCloud<PointType>::Ptr depth_cloud_local_filter2(new pcl::PointCloud<PointType>());
-        for (int i = 0; i < num_bins; ++i)
-        {
-            for (int j = 0; j < num_bins; ++j)
-            {
+        for (int i = 0; i < num_bins; ++i) {
+            for (int j = 0; j < num_bins; ++j) {
                 if (rangeImage.at<float>(i, j) != FLT_MAX)
                     depth_cloud_local_filter2->push_back(pointsArray[i][j]);
             }
@@ -189,8 +183,7 @@ public:
 
         // 5. project depth cloud onto a unit sphere
         pcl::PointCloud<PointType>::Ptr depth_cloud_unit_sphere(new pcl::PointCloud<PointType>());
-        for (int i = 0; i < (int)depth_cloud_local->size(); ++i)
-        {
+        for (int i = 0; i < (int) depth_cloud_local->size(); ++i) {
             PointType p = depth_cloud_local->points[i];
             float range = pointDistance(p);
             p.x /= range;
@@ -210,11 +203,9 @@ public:
         vector<int> pointSearchInd;
         vector<float> pointSearchSqDis;
         float dist_sq_threshold = pow(sin(bin_res / 180.0 * M_PI) * 5.0, 2);
-        for (int i = 0; i < (int)features_3d_sphere->size(); ++i)
-        {
+        for (int i = 0; i < (int) features_3d_sphere->size(); ++i) {
             kdtree->nearestKSearch(features_3d_sphere->points[i], 3, pointSearchInd, pointSearchSqDis);
-            if (pointSearchInd.size() == 3 && pointSearchSqDis[2] < dist_sq_threshold)
-            {
+            if (pointSearchInd.size() == 3 && pointSearchSqDis[2] < dist_sq_threshold) {
                 float r1 = depth_cloud_unit_sphere->points[pointSearchInd[0]].intensity;
                 Eigen::Vector3f A(depth_cloud_unit_sphere->points[pointSearchInd[0]].x * r1,
                                   depth_cloud_unit_sphere->points[pointSearchInd[0]].y * r1,
@@ -236,17 +227,18 @@ public:
                                   features_3d_sphere->points[i].z);
 
                 Eigen::Vector3f N = (A - B).cross(B - C);
-                float s = (N(0) * A(0) + N(1) * A(1) + N(2) * A(2)) 
-                        / (N(0) * V(0) + N(1) * V(1) + N(2) * V(2));
+                float s = (N(0) * A(0) + N(1) * A(1) + N(2) * A(2))
+                          / (N(0) * V(0) + N(1) * V(1) + N(2) * V(2));
 
                 float min_depth = min(r1, min(r2, r3));
                 float max_depth = max(r1, max(r2, r3));
-                if (max_depth - min_depth > 2 || s <= 0.5)
-                {
+                if (max_depth - min_depth > 2 || s <= 0.5) {
                     continue;
-                } else if (s - max_depth > 0) {
+                }
+                else if (s - max_depth > 0) {
                     s = max_depth;
-                } else if (s - min_depth < 0) {
+                }
+                else if (s - min_depth < 0) {
                     s = min_depth;
                 }
                 // convert feature into cartesian space if depth is available
@@ -260,29 +252,26 @@ public:
 
         // visualize features in cartesian 3d space (including the feature without depth (default 1))
         publishCloud(&pub_depth_feature, features_3d_sphere, stamp_cur, "vins_body_ros");
-        
+
         // update depth value for return
-        for (int i = 0; i < (int)features_3d_sphere->size(); ++i)
-        {
+        for (int i = 0; i < (int) features_3d_sphere->size(); ++i) {
             if (features_3d_sphere->points[i].intensity > 3.0)
                 depth_of_point.values[i] = features_3d_sphere->points[i].intensity;
         }
 
         // visualization project points on image for visualization (it's slow!)
-        if (pub_depth_image.getNumSubscribers() != 0)
-        {
-            vector<cv::Point2f> points_2d;
+        if (pub_depth_image.getNumSubscribers() != 0) {
+            vector <cv::Point2f> points_2d;
             vector<float> points_distance;
 
-            for (int i = 0; i < (int)depth_cloud_local->size(); ++i)
-            {
+            for (int i = 0; i < (int) depth_cloud_local->size(); ++i) {
                 // convert points from 3D to 2D
                 Eigen::Vector3d p_3d(-depth_cloud_local->points[i].y,
                                      -depth_cloud_local->points[i].z,
-                                      depth_cloud_local->points[i].x);
+                                     depth_cloud_local->points[i].x);
                 Eigen::Vector2d p_2d;
                 camera_model->spaceToPlane(p_3d, p_2d);
-                
+
                 points_2d.push_back(cv::Point2f(p_2d(0), p_2d(1)));
                 points_distance.push_back(pointDistance(depth_cloud_local->points[i]));
             }
@@ -290,8 +279,7 @@ public:
             cv::Mat showImage, circleImage;
             cv::cvtColor(imageCur, showImage, cv::COLOR_GRAY2RGB);
             circleImage = showImage.clone();
-            for (int i = 0; i < (int)points_2d.size(); ++i)
-            {
+            for (int i = 0; i < (int) points_2d.size(); ++i) {
                 float r, g, b;
                 getColor(points_distance[i], 50.0, r, g, b);
                 cv::circle(circleImage, points_2d[i], 0, cv::Scalar(r, g, b), 5);
@@ -309,11 +297,12 @@ public:
         return depth_of_point;
     }
 
-    void getColor(float p, float np, float&r, float&g, float&b) 
-    {
+    void getColor(float p, float np, float &r, float &g, float &b) {
         float inc = 6.0 / np;
         float x = p * inc;
-        r = 0.0f; g = 0.0f; b = 0.0f;
+        r = 0.0f;
+        g = 0.0f;
+        b = 0.0f;
         if ((0 <= x && x <= 1) || (5 <= x && x <= 6)) r = 1.0f;
         else if (4 <= x && x <= 5) r = x - 4;
         else if (1 <= x && x <= 2) r = 1.0f - (x - 1);

@@ -6,25 +6,26 @@
 using namespace DVision;
 using namespace DBoW2;
 
+
 class LoopDetector
 {
 public:
 
-	BriefDatabase db;
-	BriefVocabulary* voc;
+    BriefDatabase db;
+    BriefVocabulary *voc;
 
-	map<int, cv::Mat> image_pool;
+    map<int, cv::Mat> image_pool;
 
-	list<KeyFrame*> keyframelist;
+    list<KeyFrame *> keyframelist;
 
-	LoopDetector();
-	void loadVocabulary(std::string voc_path);
-	
-	void addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);
-	void addKeyFrameIntoVoc(KeyFrame* keyframe);
-	KeyFrame* getKeyFrame(int index);
+    LoopDetector();
+    void loadVocabulary(std::string voc_path);
 
-	void visualizeKeyPoses(double time_cur);
+    void addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop);
+    void addKeyFrameIntoVoc(KeyFrame *keyframe);
+    KeyFrame *getKeyFrame(int index);
 
-	int detectLoop(KeyFrame* keyframe, int frame_index);
+    void visualizeKeyPoses(double time_cur);
+
+    int detectLoop(KeyFrame *keyframe, int frame_index);
 };

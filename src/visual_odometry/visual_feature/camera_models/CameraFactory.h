@@ -6,8 +6,7 @@
 
 #include "Camera.h"
 
-namespace camodocal
-{
+namespace camodocal {
 
 class CameraFactory
 {
@@ -18,10 +17,10 @@ public:
     static boost::shared_ptr<CameraFactory> instance(void);
 
     CameraPtr generateCamera(Camera::ModelType modelType,
-                             const std::string& cameraName,
+                             const std::string &cameraName,
                              cv::Size imageSize) const;
 
-    CameraPtr generateCameraFromYamlFile(const std::string& filename);
+    CameraPtr generateCameraFromYamlFile(const std::string &filename);
 
 private:
     static boost::shared_ptr<CameraFactory> m_instance;

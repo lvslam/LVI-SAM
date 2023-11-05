@@ -25,14 +25,14 @@
 
 class Estimator
 {
-  public:
+public:
     Estimator();
 
     void setParameter();
 
     // interface
     void processIMU(double t, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
-    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &image, 
+    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 8, 1>>>> &image,
                       const vector<float> &lidar_initialization_info,
                       const std_msgs::Header &header);
 
@@ -65,7 +65,7 @@ class Estimator
     };
 
     SolverFlag solver_flag;
-    MarginalizationFlag  marginalization_flag;
+    MarginalizationFlag marginalization_flag;
     Vector3d g;
     MatrixXd Ap[2], backup_A;
     VectorXd bp[2], backup_b;

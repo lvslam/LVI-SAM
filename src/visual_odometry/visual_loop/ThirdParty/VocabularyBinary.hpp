@@ -6,39 +6,43 @@
 #include <string>
 
 namespace VINSLoop {
-    
-struct Node {
+
+struct Node
+{
     int32_t nodeId;
     int32_t parentId;
     double weight;
     uint64_t descriptor[4];
 };
 
-struct Word {
+struct Word
+{
     int32_t nodeId;
     int32_t wordId;
 };
 
-struct Vocabulary {
+
+struct Vocabulary
+{
     int32_t k;
     int32_t L;
     int32_t scoringType;
     int32_t weightingType;
-    
+
     int32_t nNodes;
     int32_t nWords;
-    
-    Node* nodes;
-    Word* words;
-    
+
+    Node *nodes;
+    Word *words;
+
     Vocabulary();
     ~Vocabulary();
-    
-    void serialize(std::ofstream& stream);
-    void deserialize(std::ifstream& stream);
-    
+
+    void serialize(std::ofstream &stream);
+    void deserialize(std::ifstream &stream);
+
     inline static size_t staticDataSize() {
-        return sizeof(Vocabulary) - sizeof(Node*) - sizeof(Word*);
+        return sizeof(Vocabulary) - sizeof(Node *) - sizeof(Word *);
     }
 };
 

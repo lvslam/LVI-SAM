@@ -32,13 +32,11 @@ int USE_LIDAR;
 int LIDAR_SKIP;
 
 
-void readParameters(ros::NodeHandle &n)
-{
+void readParameters(ros::NodeHandle &n) {
     std::string config_file;
     n.getParam("vins_config_file", config_file);
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
-    {
+    if (!fsSettings.isOpened()) {
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
@@ -47,8 +45,8 @@ void readParameters(ros::NodeHandle &n)
     std::string pkg_path = ros::package::getPath(PROJECT_NAME);
 
     // sensor topics
-    fsSettings["image_topic"]       >> IMAGE_TOPIC;
-    fsSettings["imu_topic"]         >> IMU_TOPIC;
+    fsSettings["image_topic"] >> IMAGE_TOPIC;
+    fsSettings["imu_topic"] >> IMU_TOPIC;
     fsSettings["point_cloud_topic"] >> POINT_CLOUD_TOPIC;
 
     // lidar configurations
@@ -74,8 +72,7 @@ void readParameters(ros::NodeHandle &n)
 
     // fisheye mask
     FISHEYE = fsSettings["fisheye"];
-    if (FISHEYE == 1)
-    {
+    if (FISHEYE == 1) {
         std::string mask_name;
         fsSettings["fisheye_mask"] >> mask_name;
         FISHEYE_MASK = pkg_path + mask_name;
@@ -96,23 +93,20 @@ void readParameters(ros::NodeHandle &n)
     usleep(100);
 }
 
-float pointDistance(PointType p)
-{
-    return sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+float pointDistance(PointType p) {
+    return sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
 }
 
-float pointDistance(PointType p1, PointType p2)
-{
-    return sqrt((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y) + (p1.z-p2.z)*(p1.z-p2.z));
+float pointDistance(PointType p1, PointType p2) {
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y) + (p1.z - p2.z) * (p1.z - p2.z));
 }
 
-void publishCloud(ros::Publisher *thisPub, pcl::PointCloud<PointType>::Ptr thisCloud, ros::Time thisStamp, std::string thisFrame)
-{
+void publishCloud(ros::Publisher *thisPub, pcl::PointCloud<PointType>::Ptr thisCloud, ros::Time thisStamp, std::string thisFrame) {
     if (thisPub->getNumSubscribers() == 0)
         return;
     sensor_msgs::PointCloud2 tempCloud;
     pcl::toROSMsg(*thisCloud, tempCloud);
     tempCloud.header.stamp = thisStamp;
     tempCloud.header.frame_id = thisFrame;
-    thisPub->publish(tempCloud); 
+    thisPub->publish(tempCloud);
 }

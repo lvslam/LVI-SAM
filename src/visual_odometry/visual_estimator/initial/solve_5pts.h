@@ -1,22 +1,25 @@
 #pragma once
 
 #include <vector>
+
 using namespace std;
 
 #include <opencv2/opencv.hpp>
 //#include <opencv2/core/eigen.hpp>
 #include <eigen3/Eigen/Dense>
+
 using namespace Eigen;
 
 #include <ros/console.h>
 
+
 class MotionEstimator
 {
-  public:
+public:
 
     bool solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &corres, Matrix3d &R, Vector3d &T);
 
-  private:
+private:
     double testTriangulation(const vector<cv::Point2f> &l,
                              const vector<cv::Point2f> &r,
                              cv::Mat_<double> R, cv::Mat_<double> t);

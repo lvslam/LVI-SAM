@@ -7,9 +7,10 @@
 #include "../utility/tic_toc.h"
 #include "../parameters.h"
 
+
 class ProjectionFactor : public ceres::SizedCostFunction<2, 7, 7, 7, 1>
 {
-  public:
+public:
     ProjectionFactor(const Eigen::Vector3d &_pts_i, const Eigen::Vector3d &_pts_j);
     virtual bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const;
     void check(double **parameters);

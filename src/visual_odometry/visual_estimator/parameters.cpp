@@ -28,13 +28,11 @@ int USE_LIDAR;
 int ALIGN_CAMERA_LIDAR_COORDINATE;
 
 
-void readParameters(ros::NodeHandle &n)
-{
+void readParameters(ros::NodeHandle &n) {
     std::string config_file;
     n.getParam("vins_config_file", config_file);
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
-    {
+    if (!fsSettings.isOpened()) {
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
@@ -61,18 +59,15 @@ void readParameters(ros::NodeHandle &n)
     ROS_INFO("Image dimention: ROW: %f COL: %f ", ROW, COL);
 
     ESTIMATE_EXTRINSIC = fsSettings["estimate_extrinsic"];
-    if (ESTIMATE_EXTRINSIC == 2)
-    {
+    if (ESTIMATE_EXTRINSIC == 2) {
         ROS_INFO("have no prior about extrinsic param, calibrate extrinsic param");
         RIC.push_back(Eigen::Matrix3d::Identity());
         TIC.push_back(Eigen::Vector3d::Zero());
         EX_CALIB_RESULT_PATH = pkg_path + "/config/extrinsic_parameter.csv";
 
     }
-    else 
-    {
-        if ( ESTIMATE_EXTRINSIC == 1)
-        {
+    else {
+        if (ESTIMATE_EXTRINSIC == 1) {
             ROS_INFO(" Optimize extrinsic param around initial guess!");
             EX_CALIB_RESULT_PATH = pkg_path + "/config/extrinsic_parameter.csv";
         }
@@ -92,8 +87,8 @@ void readParameters(ros::NodeHandle &n)
         TIC.push_back(eigen_T);
         ROS_INFO_STREAM("Extrinsic_R : " << std::endl << RIC[0]);
         ROS_INFO_STREAM("Extrinsic_T : " << std::endl << TIC[0].transpose());
-        
-    } 
+
+    }
 
     INIT_DEPTH = 5.0;
     BIAS_ACC_THRESHOLD = 0.1;
@@ -107,16 +102,14 @@ void readParameters(ros::NodeHandle &n)
         ROS_INFO_STREAM("Synchronized sensors, fix time offset: " << TD);
 
     ROLLING_SHUTTER = fsSettings["rolling_shutter"];
-    if (ROLLING_SHUTTER)
-    {
+    if (ROLLING_SHUTTER) {
         TR = fsSettings["rolling_shutter_tr"];
         ROS_INFO_STREAM("rolling shutter camera, read out time per line: " << TR);
     }
-    else
-    {
+    else {
         TR = 0;
     }
-    
+
     fsSettings.release();
     usleep(100);
 }
